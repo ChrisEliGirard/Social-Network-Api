@@ -1,69 +1,39 @@
 const { Schema, model } = require('mongoose');
-
-const reactionSchema = new Schema(
-    {
-        reactionId: {
-            type: Schema.Types.ObjectId,
-            default: new ObjectId,
-        },
-        reactionBody: {
-            type: String,
-            required: true,
-            max_length: 280,
-        },
-        username: {
-            type: String,
-            required: true,
-        },
-        createdAt: {
-            type: Date,
-            default: Date.now(),
-            get: formatted,
-        },
-    },
-    {
-        toJson: { getters: true}
-    }
-);
-
-function formatted(date) {
-    const formatDate = new Date(date).toLocaleString('en-US');
-    return formatDate
-}
+const reactionSchema = require("./Reaction");
 
 const thoughtSchema = new Schema(
-    {
-        thoughtText: {
-            type: String,
-            required: true,
-            min_length: 1,
-            max_length: 280,
+  {
+    thoughtText: {
+      type: String,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return v.length >= 1 && v.length <= 280;
         },
-        createdAt: {
-            type: Date,
-            default: Date.now(),
-        },
-        username: {
-            type: String,
-            required: true,
-        },
-        reactions: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: 'Reaction'
-            }
-        ],
+        message: "Thought Text must be a minimum of 1 character and a maximum of 280 characters",
+      },
     },
-    {
-        toJSON: {
-            virtuals: true,
-        },
-        id: false,
-    }
+    createdAt: {
+      type: Date,
+      default: Date.now(),
+    },
+    username: {
+      type: String,
+      required: true,
+    },
+    reactions: [reactionSchema],
+    lastAccessed: { type: Date, default: Date.now },
+  },
+  {
+    toJSON: {
+      virtuals: true,
+    },
+    id: false,
+  }
 );
 
 thoughtSchema.virtual('reactionCount').get(function (){
-    return this.reactions.length
+  return this.reactions.length
 });
 
 const Thought = model('thought', thoughtSchema);
